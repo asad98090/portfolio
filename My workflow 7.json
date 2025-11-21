@@ -1,0 +1,212 @@
+{
+  "name": "My workflow 7",
+  "nodes": [
+    {
+      "parameters": {
+        "url": "={{ $json.property_files_media[0] }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        800,
+        448
+      ],
+      "id": "554568f4-f207-482c-932f-a1b9ea3cc1d9",
+      "name": "Download Resource File"
+    },
+    {
+      "parameters": {
+        "formTitle": "Instagram Resource Sender",
+        "formDescription": "Please fill out the details below so we can send your requested resource directly to your inbox.\nSelect the word you commented on Instagram — it helps us deliver the right content to the right person!",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Name ",
+              "placeholder": "Your full name",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Email Id",
+              "fieldType": "email",
+              "placeholder": "Enter your email – you’ll receive the resource here",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Comment Word",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "hit"
+                  },
+                  {
+                    "option": "automation"
+                  }
+                ]
+              },
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        128,
+        448
+      ],
+      "id": "9a2bdc34-929d-463c-8434-f182a25bfc15",
+      "name": "Lead Magnet Form Submission",
+      "webhookId": "7853acc3-5d71-4500-a312-b816697b3bec"
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "getAll",
+        "databaseId": {
+          "__rl": true,
+          "value": "2b112073-4b7f-80f8-bdc1-e9eed5c3d76a",
+          "mode": "list",
+          "cachedResultName": "insta",
+          "cachedResultUrl": "https://www.notion.so/2b1120734b7f80f8bdc1e9eed5c3d76a"
+        },
+        "limit": 1,
+        "filterType": "manual",
+        "filters": {
+          "conditions": [
+            {
+              "key": "tag|multi_select",
+              "condition": "contains",
+              "multiSelectValue": "automation"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        320,
+        448
+      ],
+      "id": "2a5a3d7d-8e32-4cac-880d-2aebe3af0d83",
+      "name": "Fetch Resource from Notion Database",
+      "credentials": {
+        "notionApi": {
+          "id": "EOi7yITITwQ7TInL",
+          "name": "Notion account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst formSubmission = $(\"Lead Magnet Form Submission\").all()[0];\n\nconst updatedItems = items.map((item) => {\n  item.json.property_body = item.json.property_body.replace(\n    \"[First Name]\",\n    formSubmission.json[\"Name \"],\n  );\n  return item;\n});\n\nreturn updatedItems;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        560,
+        448
+      ],
+      "id": "d205441e-5445-4bf4-81c2-b2e607372ee6",
+      "name": "Personalize Email Content"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Lead Magnet Form Submission').item.json['Email Id'] }}",
+        "subject": "={{ $json.property_subject }}",
+        "emailType": "text",
+        "message": "={{ $('Personalize Email Content').item.json.property_body }}",
+        "options": {
+          "appendAttribution": false,
+          "attachmentsUi": {
+            "attachmentsBinary": [
+              {}
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1040,
+        448
+      ],
+      "id": "590d5200-3fb7-45c0-a5cc-34beae07a1cc",
+      "name": "Send Personalized Resource Email",
+      "webhookId": "4a2b23f6-955b-4957-8e6c-88e8f7625f39",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "IeIwUvVogk4nTsI7",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Download Resource File": {
+      "main": [
+        [
+          {
+            "node": "Send Personalized Resource Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lead Magnet Form Submission": {
+      "main": [
+        [
+          {
+            "node": "Fetch Resource from Notion Database",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Resource from Notion Database": {
+      "main": [
+        [
+          {
+            "node": "Personalize Email Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Personalize Email Content": {
+      "main": [
+        [
+          {
+            "node": "Download Resource File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "96a8cac6-bd2f-4b96-b750-d08b5742a89a",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b5cbc31a763a4fdb79b6e249c3dc096643c28c540146b517b84a0058662aadea"
+  },
+  "id": "LFMo6YHxhfjywRYY",
+  "tags": []
+}
